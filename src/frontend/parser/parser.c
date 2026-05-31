@@ -24,15 +24,15 @@ static struct Token advance(struct Parser *parser) {
     return tmp;
 }
 
-static struct Expr *create_integer_literal(struct Parser *parser) {
+static struct Expr *create_integer_literal(struct Parser *parser, struct Token tok) {
     struct Expr *expr = malloc(sizeof(struct Expr));
     expr->type = EX_INT_LITERAL;
-    char *strnum = malloc(peek(parser).length + 1);
-    strncpy(strnum, parser->lexer->source + peek(parser).offest,
-            peek(parser).length);
-    strnum[peek(parser).length] = '\0';
+    char *strnum = malloc(tok.length + 1);
+    strncpy(strnum, parser->lexer->source + tok.offest,
+            tok.length);
+    strnum[tok.length] = '\0';
 
-    assert(peek(parser).length == strlen(strnum));
+    assert(tok.length == strlen(strnum));
 
     char *end;
     long value = strtol(strnum, &end, 10);
@@ -61,16 +61,19 @@ static void error(const char *fmt, ...) {
 
 static struct Expr *parse_primary(struct Parser *parser) {
     if (peek(parser).type == TK_INTEGERLITERAL) {
-        advance(parser);
-        return create_integer_literal(parser);
+        struct Token tok = advance(parser);
+        return create_integer_literal(parser, tok);
     } else if (peek(parser).type == TK_OPENPAREN) {
-        struct Expr *expr = parse_expression(parser);
         advance(parser);
+        struct Expr *expr = parse_expression(parser);
         if (peek(parser).type != TK_CLOSEPAREN) {
             error("expected ')' at %zu:%zu\n", peek(parser).column,
                   peek(parser).line);
             exit(1);
         }
+        advance(parser);
+        
+        return expr;
     } else {
         error("unexpected token\n");
         exit(1);
@@ -99,13 +102,22 @@ static struct Expr *parse_factor(struct Parser *parser) {
         } else {
             left = create_binary_op(parser, left, right, BIN_DIV);
         }
-        advance(parser);
     }
-    return parse_primary(parser);
+    return left;
 }
 
 static struct Expr *parse_term(struct Parser *parser) {
-    return parse_factor(parser);
+    struct Expr *left = parse_factor(parser);
+    while (peek(parser).type == TK_PLUS || peek(parser).type == TK_MINUS) {
+        enum TokenType type = advance(parser).type;
+        struct Expr *right = parse_factor(parser);
+        if (type == TK_PLUS) {
+            left = create_binary_op(parser, left, right, BIN_ADD);
+        } else {
+            left = create_binary_op(parser, left, right, BIN_SUB);
+        }
+    }
+    return left;
 }
 
 static struct Expr *parse_expression(struct Parser *parser) {
@@ -113,7 +125,12 @@ static struct Expr *parse_expression(struct Parser *parser) {
 }
 
 struct Expr *parser_parse(struct Parser *parser) {
-    return parse_expression(parser);
+    struct Expr *expr = parse_expression(parser);
+    if (peek(parser).type != TK_EOF) {
+        error("unexpected trailing tokens\n");
+        exit(1);
+    }
+    return expr;
 }
 
 void parser_free(struct Parser *parser) {
