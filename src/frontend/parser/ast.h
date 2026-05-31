@@ -33,5 +33,7 @@ struct Expr {
     } value;
 };
 
+void free_ast(struct Expr *ast);
+
 #endif // FRONTEND_PARSER_AST_H
 
