@@ -14,6 +14,11 @@
 const char *KW_print;
 const char *KW_let;
 const char *KW_int;
+const char *KW_if;
+const char *KW_else;
+const char *KW_while;
+const char *KW_continue;
+const char *KW_break;
 
 
 void lexer_init(struct Lexer *lexer, const char *source, size_t source_len) {
@@ -30,6 +35,11 @@ void lexer_init(struct Lexer *lexer, const char *source, size_t source_len) {
         KW_print = str_intern("print");
         KW_let = str_intern("let");
         KW_int = str_intern("int");
+        KW_if = str_intern("if");
+        KW_else = str_intern("else");
+        KW_while = str_intern("while");
+        KW_continue = str_intern("continue");
+        KW_break = str_intern("break");
         #define HAS_INTERNALIZED_KEYWORDS 
     #endif  
 }
@@ -50,6 +60,13 @@ static char peek(struct Lexer *lexer) {
     return lexer->source[lexer->current];
 }
 
+static char peekn(struct Lexer *lexer, size_t n) {
+    if (lexer->current + n >= lexer->source_len) {
+        return EOF_CHAR;
+    }
+    return lexer->source[lexer->current + n];
+}
+
 static char advance(struct Lexer *lexer) {
     if (peek(lexer) == EOF_CHAR) {
         return EOF_CHAR;
@@ -68,13 +85,6 @@ static char advance(struct Lexer *lexer) {
 static struct Token gen_token(struct Lexer *lexer, enum TokenType type) {
     return (struct Token){type, lexer->start, lexer->current - lexer->start,
                           lexer->line, lexer->start_column};
-}
-
-static char peekn(struct Lexer *lexer, size_t n) {
-    if (lexer->current + n >= lexer->source_len) {
-        return EOF_CHAR;
-    }
-    return lexer->source[lexer->current + n];
 }
 
 static bool skip_whitespace(struct Lexer *lexer) {
@@ -152,6 +162,11 @@ struct Token lexer_next(struct Lexer *lexer) {
         advance(lexer);
         return gen_token(lexer, TK_COLON);
     case '=':
+        if (peekn(lexer, 1) == '=') {
+            advance(lexer);
+            advance(lexer);
+            return gen_token(lexer, TK_EQUAL_EQUAL);
+        }
         advance(lexer);
         return gen_token(lexer, TK_EQUAL);
     case '{':
@@ -160,6 +175,43 @@ struct Token lexer_next(struct Lexer *lexer) {
     case '}':
         advance(lexer);
         return gen_token(lexer, TK_CLOSEBRACE);
+    case '>':
+        if (peekn(lexer, 1) == '=') {
+            advance(lexer);
+            advance(lexer);
+            return gen_token(lexer, TK_GREATER_EQ);
+        }
+        advance(lexer);
+        return gen_token(lexer, TK_GREATER);
+    case '<':
+        if (peekn(lexer, 1) == '=') {
+            advance(lexer);
+            advance(lexer);
+            return gen_token(lexer, TK_LESS_EQ);
+        }
+        advance(lexer);
+        return gen_token(lexer, TK_LESS);
+    case '|':
+        if (peekn(lexer, 1) == '|') {
+            advance(lexer);
+            advance(lexer);
+            return gen_token(lexer, TK_OR);
+        }
+        eprintf("expected '|' but found: '%c'\n", c);
+    case '&':
+        if (peekn(lexer, 1) == '&') {
+            advance(lexer);
+            advance(lexer);
+            return gen_token(lexer, TK_AND);
+        }
+        eprintf("expected '&' but found: '%c'\n", c);
+    case '!':
+        if (peekn(lexer, 1) == '=') {
+            advance(lexer);
+            advance(lexer);
+            return gen_token(lexer, TK_BANG_EQ);
+        }
+        return gen_token(lexer, TK_BANG);
     default:
         if (isdigit((unsigned char)c)) {
             advance(lexer);
@@ -184,6 +236,16 @@ struct Token lexer_next(struct Lexer *lexer) {
                 return gen_token(lexer, TK_INT);
             } else if (s == KW_let) {
                 return gen_token(lexer, TK_LET);
+            } else if (s == KW_break) {
+                return gen_token(lexer, TK_BREAK);
+            } else if (s == KW_continue) {
+                return gen_token(lexer, TK_CONTINUE);
+            } else if (s == KW_else) {
+                return gen_token(lexer, TK_ELSE);
+            } else if (s == KW_if) {
+                return gen_token(lexer, TK_IF);
+            } else if (s == KW_while) {
+                return gen_token(lexer, TK_WHILE);
             } else {
                 return gen_token(lexer, TK_IDENTIFIER);
             }

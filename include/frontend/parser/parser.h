@@ -11,6 +11,7 @@ struct Parser {
     struct Lexer *lexer;
     struct Token next;
     struct Token lookahead1;
+    int error_count;
 };
 
 void parser_init(struct Parser *parser, const char *source, size_t source_len);

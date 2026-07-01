@@ -24,9 +24,26 @@ enum TokenType {
 
     TK_EQUAL,
 
+    TK_EQUAL_EQUAL,
+    TK_GREATER,
+    TK_LESS,
+    TK_GREATER_EQ,
+    TK_LESS_EQ,
+    TK_OR,
+    TK_AND,
+    TK_BANG,
+    TK_BANG_EQ,
+
     TK_IDENTIFIER,
 
     TK_INT,
+
+    TK_IF,
+    TK_ELSE,
+
+    TK_WHILE,
+    TK_BREAK,
+    TK_CONTINUE,
 
     TK_LET,
 

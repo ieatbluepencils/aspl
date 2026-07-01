@@ -3,8 +3,10 @@
 
 #include <stddef.h>
 
-typedef int Value;
-
+typedef union {
+    int int_value;
+    int bool_value;
+} Value;
 struct ValueArray {
     Value *data;
     size_t size;

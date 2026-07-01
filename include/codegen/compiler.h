@@ -18,9 +18,14 @@ struct Scope {
     size_t start_slot;
 };
 
+struct Patch { 
+    size_t position;
+    struct Patch *next;
+};
+
 struct Compiler {
     struct Scope scopes[MAX_SCOPE];
-    size_t scope_depth;
+    int scope_depth;
 
     int local_count;
 };

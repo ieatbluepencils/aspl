@@ -88,7 +88,8 @@ void dump_chunk(struct Chunk *chunk) {
     }
     printf("\nCONSTANTS: ");
     for (size_t i = 0; i < chunk->constants->size; ++i) {
-        printf("%d, ", (int)chunk->constants->data[i]);
+        printf("as int: %d, ", chunk->constants->data[i].int_value);
+        printf("as bool: %d, ", chunk->constants->data[i].bool_value);
     }
     printf("\n");
 }

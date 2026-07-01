@@ -10,11 +10,18 @@ struct NodeMetadata {
 };
 
 struct Expr;
+struct Stmt;
 
 enum ExprType {
     EX_BINARY,
     EX_INT_LITERAL,
-    EX_VARIABLE
+    EX_VARIABLE,
+    EX_UNARY,
+    EX_ERROR,
+};
+
+struct ExprError {
+    const char *msg;
 };
 
 enum BinOpType {
@@ -22,12 +29,30 @@ enum BinOpType {
     BIN_SUB,
     BIN_MUL,
     BIN_DIV,
+    BIN_OR,
+    BIN_AND,
+    BIN_EQ_EQ,
+    BIN_BANG_EQ,
+    BIN_LESSER,
+    BIN_GREATER,
+    BIN_LESSER_EQ,
+    BIN_GREATER_EQ,
 };
 
 struct BinaryOp {
     enum BinOpType op; 
     struct Expr* left;
     struct Expr* right;
+};
+
+enum UnaryOpType {
+    UN_NOT,
+    UN_NEGATE,
+};
+
+struct UnaryOp {
+    enum UnaryOpType op;
+    struct Expr *expr;
 };
 
 struct IntegerLit {
@@ -44,6 +69,8 @@ struct Expr {
         struct BinaryOp binop;
         struct IntegerLit intliteral;
         struct Variable variable;
+        struct UnaryOp unaryop;
+        struct ExprError error;
     } value;
 
     struct NodeMetadata metadata;
@@ -55,6 +82,15 @@ enum StmtType {
     STMT_VARDECL,
     STMT_VARASSIGN,
     STMT_BLOCK,
+    STMT_IF,
+    STMT_WHILE,
+    STMT_BREAK,
+    STMT_CONTINUE,
+    STMT_ERROR,
+};
+
+struct StmtError {
+    const char *msg;
 };
 
 struct Block {
@@ -67,12 +103,23 @@ struct VarAssign {
     struct Expr *value;
 };
 
+struct WhileStmt {
+    struct Expr *condition;
+    struct Stmt *body;
+};
+
 struct ExprStmt {
     struct Expr *expr;
 };
 
 enum Type {
     TYPE_INT,
+};
+
+struct If {
+    struct Expr *condition;
+    struct Stmt *then_branch;
+    struct Stmt *else_branch;
 };
 
 struct VarDecl {
@@ -84,6 +131,14 @@ struct VarDecl {
 struct PrintStmt {
     struct Expr *expr;
 };
+
+struct Continue {
+
+};
+
+struct Break {
+
+};
 struct Stmt {
     enum StmtType type;
 
@@ -93,6 +148,11 @@ struct Stmt {
         struct VarDecl variabledecl;
         struct VarAssign variableassignment;
         struct Block block;
+        struct If ifstmt;
+        struct WhileStmt whilestmt;
+        struct Break breakstmt;
+        struct Continue continuestmt;
+        struct StmtError error;
     } value;
 
     struct NodeMetadata metadata;
